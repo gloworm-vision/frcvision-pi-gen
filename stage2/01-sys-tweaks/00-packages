@@ -27,5 +27,6 @@ ssh-import-id
 rng-tools
 ethtool
 vl805fw
+ntfs-3g
 libedgetpu1-std
 python3-edgetpu
