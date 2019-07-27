@@ -1,0 +1,27 @@
+--- cmake/OpenCVFindOpenBLAS.cmake	2019-07-25 12:01:19.000000000 -0700
++++ cmake/OpenCVFindOpenBLAS.cmake	2019-07-26 19:08:29.129894347 -0700
+@@ -69,6 +69,7 @@
+         /usr/lib/openblas-base
+         /usr/lib64
+         /usr/lib
++        /usr/lib/arm-linux-gnueabihf
+  )
+ 
+ FIND_PATH(OpenBLAS_INCLUDE_DIR NAMES cblas.h PATHS ${Open_BLAS_INCLUDE_SEARCH_PATHS} NO_DEFAULT_PATH)
+--- modules/core/CMakeLists.txt	2019-07-25 12:01:19.000000000 -0700
++++ modules/core/CMakeLists.txt	2019-07-26 22:03:15.861539330 -0700
+@@ -31,6 +31,14 @@
+   list(APPEND extra_libs tbb)
+ endif()
+ 
++if(NOT MSVC)
++  find_library(ATOMIC NAMES atomic libatomic.so.1)
++  if(ATOMIC)
++    message(STATUS "Found libatomic: ${ATOMIC}")
++    list(APPEND extra_libs ${ATOMIC})
++  endif()
++endif()
++
+ if(DEFINED WINRT AND NOT DEFINED ENABLE_WINRT_MODE_NATIVE)
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /ZW")
+ endif()

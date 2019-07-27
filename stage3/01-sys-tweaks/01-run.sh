@@ -11,7 +11,17 @@ find ./usr/lib -lname '/*' | \
   do
     echo ln -sf $(echo $(echo $l | sed 's|/[^/]*|/..|g')$(readlink $l) | sed 's/.....//') $l
   done | sh
+find ./usr/include -lname '/*' | \
+  while read l
+  do
+    echo ln -sf $(echo $(echo $l | sed 's|/[^/]*|/..|g')$(readlink $l) | sed 's/.....//') $l
+  done | sh
 find ./etc/alternatives -lname '/*.so.*' | \
+  while read l
+  do
+    echo ln -sf $(echo $(echo $l | sed 's|/[^/]*|/..|g')$(readlink $l) | sed 's/.....//') $l
+  done | sh
+find ./etc/alternatives -lname '/*/arm-linux-gnueabihf/*' | \
   while read l
   do
     echo ln -sf $(echo $(echo $l | sed 's|/[^/]*|/..|g')$(readlink $l) | sed 's/.....//') $l
@@ -19,10 +29,9 @@ find ./etc/alternatives -lname '/*.so.*' | \
 popd
 
 #
-# Add symbolic link for liblapacke.h to /usr/include/openblas (required by
-# OpenCV, see OpenCV#9953)
+# Add symbolic link for cblas.h to /usr/include (required by OpenCV)
 #
-ln -sf ../lapacke.h "${ROOTFS_DIR}/usr/include/openblas/lapacke.h"
+ln -sf arm-linux-gnueabihf/cblas.h "${ROOTFS_DIR}/usr/include/cblas.h"
 
 #
 # Download sources
@@ -33,15 +42,15 @@ pushd ${DOWNLOAD_DIR}
 
 # raspbian toolchain
 wget -nc -nv \
-    https://github.com/wpilibsuite/raspbian-toolchain/releases/download/v1.3.0/Raspbian9-Linux-Toolchain-6.3.0.tar.gz
+    https://github.com/wpilibsuite/raspbian-toolchain/releases/download/v2.1.0/Raspbian10-Linux-Toolchain-8.3.0.tar.gz
 
 # opencv sources
 wget -nc -nv \
-    https://github.com/opencv/opencv/archive/3.4.4.tar.gz
+    https://github.com/opencv/opencv/archive/3.4.7.tar.gz
 
 # allwpilib
 wget -nc -nv -O allwpilib.tar.gz \
-    https://github.com/wpilibsuite/allwpilib/archive/v2019.3.2.tar.gz
+    https://github.com/wpilibsuite/allwpilib/archive/ca3e71e214888176fe71cce65955784ac417483f.tar.gz
 
 # pynetworktables
 wget -nc -nv -O pynetworktables.tar.gz \
@@ -69,12 +78,13 @@ install -v -d ${EXTRACT_DIR}
 pushd ${EXTRACT_DIR}
 
 # opencv
-tar xzf "${DOWNLOAD_DIR}/3.4.4.tar.gz"
-pushd opencv-3.4.4
+tar xzf "${DOWNLOAD_DIR}/3.4.7.tar.gz"
+pushd opencv-3.4.7
 sed -i -e 's/javac sourcepath/javac target="1.8" source="1.8" sourcepath/' modules/java/jar/build.xml.in
 # disable extraneous data warnings; these are common with USB cameras
 sed -i -e '/JWRN_EXTRANEOUS_DATA/d' 3rdparty/libjpeg/jdmarker.c
 sed -i -e '/JWRN_EXTRANEOUS_DATA/d' 3rdparty/libjpeg-turbo/src/jdmarker.c
+patch -p0 < "${SUB_STAGE_DIR}/files/opencv.patch"
 popd
 
 # allwpilib
@@ -91,6 +101,7 @@ tar xzf "${DOWNLOAD_DIR}/robotpy-cscore.tar.gz"
 mv robotpy-cscore-* robotpy-cscore
 echo "__version__ = '2019.1.0'" > robotpy-cscore/cscore/version.py
 pushd robotpy-cscore
+patch -p0 < "${SUB_STAGE_DIR}/files/robotpy-cscore.patch"
 rm -rf pybind11
 tar xzf "${DOWNLOAD_DIR}/pybind11.tar.gz"
 mv pybind11-* pybind11
@@ -111,8 +122,8 @@ popd
 
 # extract raspbian toolchain
 pushd ${WORK_DIR}
-tar xzf ${DOWNLOAD_DIR}/Raspbian9-Linux-Toolchain-*.tar.gz
-export PATH=${WORK_DIR}/raspbian9/bin:${PATH}
+tar xzf ${DOWNLOAD_DIR}/Raspbian10-Linux-Toolchain-*.tar.gz
+export PATH=${WORK_DIR}/raspbian10/bin:${PATH}
 popd
 
 export PKG_CONFIG_DIR=
@@ -127,11 +138,11 @@ build_opencv () {
     rm -rf $1
     mkdir -p $1
     pushd $1
-    cmake "${EXTRACT_DIR}/opencv-3.4.4" \
+    cmake "${EXTRACT_DIR}/opencv-3.4.7" \
 	-DWITH_FFMPEG=OFF \
         -DBUILD_JPEG=ON \
         -DBUILD_TESTS=OFF \
-        -DPython_ADDITIONAL_VERSIONS=3.5 \
+        -DPython_ADDITIONAL_VERSIONS=3.7 \
         -DBUILD_JAVA=$3 \
         -DENABLE_CXX11=ON \
         -DBUILD_SHARED_LIBS=$3 \
@@ -143,8 +154,8 @@ build_opencv () {
         -DENABLE_NEON=ON \
         -DENABLE_VFPV3=ON \
         -DBUILD_opencv_python3=$3 \
-        -DPYTHON3_INCLUDE_PATH=${ROOTFS_DIR}/usr/include/python3.5m \
-        -DPYTHON3_NUMPY_INCLUDE_DIRS=${ROOTFS_DIR}/usr/include/python3.5m/numpy \
+        -DPYTHON3_INCLUDE_PATH=${ROOTFS_DIR}/usr/include/python3.7m \
+        -DPYTHON3_NUMPY_INCLUDE_DIRS=${ROOTFS_DIR}/usr/include/python3.7m/numpy \
         -DOPENCV_EXTRA_FLAGS_DEBUG=-Og \
         -DCMAKE_MODULE_PATH=${SUB_STAGE_DIR}/files \
         -DCMAKE_INSTALL_PREFIX=/usr/local/frc$4 \
@@ -159,18 +170,18 @@ build_opencv build/opencv-build Release ON "" || exit 1
 build_opencv build/opencv-static Release OFF "-static" || exit 1
 
 # fix up java install
-cp -p ${ROOTFS_DIR}/usr/local/frc/share/OpenCV/java/libopencv_java344*.so "${ROOTFS_DIR}/usr/local/frc/lib/"
+cp -p ${ROOTFS_DIR}/usr/local/frc/share/OpenCV/java/libopencv_java347*.so "${ROOTFS_DIR}/usr/local/frc/lib/"
 mkdir -p "${ROOTFS_DIR}/usr/local/frc/java"
-cp -p "${ROOTFS_DIR}/usr/local/frc/share/OpenCV/java/opencv-344.jar" "${ROOTFS_DIR}/usr/local/frc/java/"
+cp -p "${ROOTFS_DIR}/usr/local/frc/share/OpenCV/java/opencv-347.jar" "${ROOTFS_DIR}/usr/local/frc/java/"
 
 # the opencv build names the python .so with the build platform name
 # instead of the target platform, so rename it
-pushd "${ROOTFS_DIR}/usr/local/frc/python/cv2/python-3.5"
-mv cv2.cpython-35m-*-gnu.so cv2.cpython-35m-arm-linux-gnueabihf.so
+pushd "${ROOTFS_DIR}/usr/local/frc/python/cv2/python-3.7"
+mv cv2.cpython-37m-*-gnu.so cv2.cpython-37m-arm-linux-gnueabihf.so
 popd
 
 # link python package to dist-packages
-ln -sf /usr/local/frc/python/cv2 "${ROOTFS_DIR}/usr/local/lib/python3.5/dist-packages/cv2"
+ln -sf /usr/local/frc/python/cv2 "${ROOTFS_DIR}/usr/local/lib/python3.7/dist-packages/cv2"
 
 #
 # Build wpiutil, cscore, ntcore, cameraserver
@@ -185,8 +196,8 @@ build_wpilib () {
         -DCMAKE_BUILD_TYPE=$2 \
         -DCMAKE_TOOLCHAIN_FILE=${SUB_STAGE_DIR}/files/arm-pi-gnueabihf.toolchain.cmake \
         -DCMAKE_MODULE_PATH=${SUB_STAGE_DIR}/files \
-        -DOPENCV_JAR_FILE=`ls ${ROOTFS_DIR}/usr/local/frc/java/opencv-344.jar` \
-        -DOPENCV_JNI_FILE=`ls ${ROOTFS_DIR}/usr/local/frc/lib/libopencv_java344.so` \
+        -DOPENCV_JAR_FILE=`ls ${ROOTFS_DIR}/usr/local/frc/java/opencv-347.jar` \
+        -DOPENCV_JNI_FILE=`ls ${ROOTFS_DIR}/usr/local/frc/lib/libopencv_java347.so` \
         -DOpenCV_DIR=${ROOTFS_DIR}/usr/local/frc/share/OpenCV \
         -DTHREADS_PTHREAD_ARG=-pthread \
         -DCMAKE_INSTALL_PREFIX=/usr/local/frc \
@@ -234,7 +245,9 @@ sh -c 'cd build/allwpilib-build/jar && tar cf - *.jar' | \
     sh -c "cd ${ROOTFS_DIR}/usr/local/frc/java && tar xf -"
 
 # headers
-sh -c "cd ${EXTRACT_DIR}/allwpilib/wpiutil/src/main/native/include && tar cf - uv.h uv wpi" | \
+sh -c "cd ${EXTRACT_DIR}/allwpilib/wpiutil/src/main/native/include && tar cf - wpi" | \
+    sh -c "cd ${ROOTFS_DIR}/usr/local/frc/include && tar xf -"
+sh -c "cd ${EXTRACT_DIR}/allwpilib/wpiutil/src/main/native/libuv/include && tar cf - uv.h uv" | \
     sh -c "cd ${ROOTFS_DIR}/usr/local/frc/include && tar xf -"
 sh -c "cd ${EXTRACT_DIR}/allwpilib/cscore/src/main/native/include && tar cf - ." | \
     sh -c "cd ${ROOTFS_DIR}/usr/local/frc/include && tar xf -"
@@ -274,7 +287,7 @@ popd
 # Install pynetworktables
 #
 
-#sh -c "cd ${EXTRACT_DIR}/pynetworktables && tar cf - networktables ntcore" | sh -c "cd ${ROOTFS_DIR}/usr/local/lib/python3.5/dist-packages/ && tar xf -"
+#sh -c "cd ${EXTRACT_DIR}/pynetworktables && tar cf - networktables ntcore" | sh -c "cd ${ROOTFS_DIR}/usr/local/lib/python3.7/dist-packages/ && tar xf -"
 on_chroot << EOF
 pip3 install setuptools
 pushd /usr/src/pynetworktables
@@ -293,13 +306,13 @@ pushd ${EXTRACT_DIR}/robotpy-cscore
 
 # install Python sources
 sh -c 'tar cf - cscore' | \
-    sh -c "cd ${ROOTFS_DIR}/usr/local/lib/python3.5/dist-packages && tar xf -"
+    sh -c "cd ${ROOTFS_DIR}/usr/local/lib/python3.7/dist-packages && tar xf -"
 
 # build module
-arm-raspbian9-linux-gnueabihf-g++ \
+arm-raspbian10-linux-gnueabihf-g++ \
     --sysroot=${ROOTFS_DIR} \
-    -g -O -Wall -fvisibility=hidden -shared -fPIC \
-    -o "${ROOTFS_DIR}/usr/local/lib/python3.5/dist-packages/cscore/_cscore.cpython-35m-arm-linux-gnueabihf.so" \
+    -g -O -Wall -fvisibility=hidden -shared -fPIC -std=c++17 \
+    -o "${ROOTFS_DIR}/usr/local/lib/python3.7/dist-packages/cscore/_cscore.cpython-37m-arm-linux-gnueabihf.so" \
     -Ipybind11/include \
     `env PKG_CONFIG_LIBDIR=${PKG_CONFIG_LIBDIR}:${ROOTFS_DIR}/usr/local/frc/lib/pkgconfig pkg-config --cflags python3 cscore wpiutil` \
     src/_cscore.cpp \
@@ -320,8 +333,8 @@ popd
 EOF
 
 install -m 644 "${EXTRACT_DIR}/pixy2/build/libpixyusb2/libpixy2.a" "${ROOTFS_DIR}/usr/local/frc/lib/"
-install -m 644 "${EXTRACT_DIR}/pixy2/build/python_demos/pixy.py" "${ROOTFS_DIR}/usr/local/lib/python3.5/dist-packages/"
-install -m 755 ${EXTRACT_DIR}/pixy2/build/python_demos/_pixy.*.so "${ROOTFS_DIR}/usr/local/lib/python3.5/dist-packages/"
+install -m 644 "${EXTRACT_DIR}/pixy2/build/python_demos/pixy.py" "${ROOTFS_DIR}/usr/local/lib/python3.7/dist-packages/"
+install -m 755 ${EXTRACT_DIR}/pixy2/build/python_demos/_pixy.*.so "${ROOTFS_DIR}/usr/local/lib/python3.7/dist-packages/"
 rm -rf "${EXTRACT_DIR}/pixy2/build"
 
 #
@@ -331,9 +344,9 @@ rm -rf "${EXTRACT_DIR}/pixy2/build"
 # Split debug info
 
 split_debug () {
-    arm-raspbian9-linux-gnueabihf-objcopy --only-keep-debug $1 $1.debug
-    arm-raspbian9-linux-gnueabihf-strip -g $1
-    arm-raspbian9-linux-gnueabihf-objcopy --add-gnu-debuglink=$1.debug $1
+    arm-raspbian10-linux-gnueabihf-objcopy --only-keep-debug $1 $1.debug
+    arm-raspbian10-linux-gnueabihf-strip -g $1
+    arm-raspbian10-linux-gnueabihf-objcopy --add-gnu-debuglink=$1.debug $1
 }
 
 split_debug_so () {

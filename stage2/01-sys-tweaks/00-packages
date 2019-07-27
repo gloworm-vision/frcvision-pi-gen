@@ -18,10 +18,11 @@ dphys-swapfile
 raspberrypi-sys-mods
 apt-listchanges
 usb-modeswitch
-apt-transport-https
 libpam-chksshpwd
 rpi-update
 libmtp-runtime
 htop
 policykit-1
 ssh-import-id
+rng-tools
+ethtool

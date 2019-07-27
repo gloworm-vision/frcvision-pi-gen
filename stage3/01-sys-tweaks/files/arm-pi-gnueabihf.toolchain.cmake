@@ -3,7 +3,7 @@ if(COMMAND toolchain_save_config)
 endif()
 
 set(GCC_COMPILER_VERSION "" CACHE STRING "GCC Compiler version")
-set(GNU_MACHINE "arm-raspbian9-linux-gnueabi" CACHE STRING "GNU compiler triple")
+set(GNU_MACHINE "arm-raspbian10-linux-gnueabi" CACHE STRING "GNU compiler triple")
 set(SOFTFP no)
 set(FLOAT_ABI_SUFFIX "hf")
 set(CMAKE_SYSTEM_NAME Linux)
@@ -11,7 +11,7 @@ set(CMAKE_SYSTEM_VERSION 1)
 set(CMAKE_SYSTEM_PROCESSOR arm)
 set(CMAKE_SYSROOT "$ENV{ROOTFS_DIR}")
 
-include("$ENV{ROOTFS_DIR}/usr/src/opencv-3.4.4/platforms/linux/gnu.toolchain.cmake")
+include("$ENV{ROOTFS_DIR}/usr/src/opencv-3.4.7/platforms/linux/gnu.toolchain.cmake")
 
 if(NOT DEFINED CMAKE_C_COMPILER)
   find_program(CMAKE_C_COMPILER NAMES ${GNU_MACHINE}${FLOAT_ABI_SUFFIX}-gcc${__GCC_VER_SUFFIX})

@@ -54,6 +54,9 @@ cat files/bash.bashrc >> "${ROOTFS_DIR}/etc/bash.bashrc"
 cat files/bash.logout >> "${ROOTFS_DIR}/etc/bash.bash_logout"
 
 on_chroot << EOF
+systemctl disable hwclock.sh
+systemctl disable nfs-common
+systemctl disable rpcbind
 if [ "${ENABLE_SSH}" == "1" ]; then
 	systemctl enable ssh
 else

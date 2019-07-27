@@ -1,10 +1,10 @@
 quilt
 parted
-realpath
+realpath:coreutils
 qemu-arm-static:qemu-user-static
 debootstrap
 zerofree
-pxz zip
+zip
 mkdosfs:dosfstools
 capsh:libcap2-bin
 bsdtar
@@ -15,11 +15,11 @@ curl
 xxd
 file
 git
+lsmod:kmod
 pkg-config
 gcc:build-essential
 cmake
 python3
 ant
 sudo
-java:openjdk-8-jdk
 java:openjdk-11-jdk

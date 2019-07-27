@@ -111,7 +111,7 @@ int main(int argc, char* argv[]) {
           // sequence num
           uint32_t ts = wpi::FloatToBits((wpi::Now() - startTime) * 1.0e-6);
           uint16_t pktlen = len + 1 + 4 + 2;
-          out << wpi::ArrayRef<uint8_t>(
+          const uint8_t contents[] =
               {static_cast<uint8_t>((pktlen >> 8) & 0xff),
                static_cast<uint8_t>(pktlen & 0xff), 12,
                static_cast<uint8_t>((ts >> 24) & 0xff),
@@ -119,7 +119,8 @@ int main(int argc, char* argv[]) {
                static_cast<uint8_t>((ts >> 8) & 0xff),
                static_cast<uint8_t>(ts & 0xff),
                static_cast<uint8_t>((*tcpSeq >> 8) & 0xff),
-               static_cast<uint8_t>(*tcpSeq & 0xff)});
+               static_cast<uint8_t>(*tcpSeq & 0xff)};
+          out << wpi::ArrayRef<uint8_t>(contents);
           out << wpi::StringRef(buf.base, len);
           (*tcpSeq)++;
 
