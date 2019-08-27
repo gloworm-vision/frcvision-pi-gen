@@ -8,8 +8,12 @@ mkdir -p "${EXAMPLE_DIR}"
 cp -p "${ROOTFS_DIR}"/home/${FIRST_USER_NAME}/zips/* "${EXAMPLE_DIR}/"
 
 on_chroot << EOF
-/etc/init.d/fake-hwclock stop
-hardlink -t /usr/share/doc
+if [ -x /etc/init.d/fake-hwclock ]; then
+	/etc/init.d/fake-hwclock stop
+fi
+if hash hardlink 2>/dev/null; then
+	hardlink -t /usr/share/doc
+fi
 EOF
 
 if [ -d "${ROOTFS_DIR}/home/${FIRST_USER_NAME}/.config" ]; then
