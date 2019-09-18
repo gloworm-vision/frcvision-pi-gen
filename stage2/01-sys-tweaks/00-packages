@@ -29,5 +29,6 @@ ethtool
 vl805fw
 ntfs-3g
 pciutils
+rpi-eeprom
 libedgetpu1-std
 python3-edgetpu
