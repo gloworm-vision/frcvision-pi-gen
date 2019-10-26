@@ -1,4 +1,5 @@
 IMG_NAME='FRCVision'
+HOSTNAME=frcvision
 ENABLE_SSH=1
 PI_GEN=FRCVision-pi-gen
 PI_GEN_REPO=https://github.com/allwpilib/FRCVision-pi-gen
