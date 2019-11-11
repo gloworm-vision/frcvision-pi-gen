@@ -33,7 +33,9 @@ done
 IMG_VERSION=${IMG_VERSION:-$(git describe)}
 
 # Ensure that the configuration file is an absolute path
-CONFIG_FILE=$(realpath -s "$CONFIG_FILE")
+if test -x /usr/bin/realpath; then
+	CONFIG_FILE=$(realpath -s "$CONFIG_FILE")
+fi
 
 # Ensure that the confguration file is present
 if test -z "${CONFIG_FILE}"; then
