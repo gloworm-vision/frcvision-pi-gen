@@ -8,6 +8,7 @@ RUN apt-get -y update \
         quilt coreutils qemu-user-static debootstrap zerofree zip dosfstools \
         bsdtar libcap2-bin rsync grep udev xz-utils curl xxd file kmod\
         build-essential cmake python3 python3-distutils ant sudo openjdk-11-jdk \
+        device-tree-compiler \
     && rm -rf /var/lib/apt/lists/*
 
 COPY . /pi-gen/

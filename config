@@ -7,3 +7,4 @@ LOCALE_DEFAULT=en_US.UTF-8
 KEYBOARD_KEYMAP=us
 KEYBOARD_LAYOUT="English (US) - English (US\\, international with dead keys)"
 TIMEZONE_DEFAULT=America/Los_Angeles
+GLOWORM=1

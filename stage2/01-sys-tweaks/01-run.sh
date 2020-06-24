@@ -62,6 +62,11 @@ if [ "${ENABLE_SSH}" == "1" ]; then
 else
 	systemctl disable ssh
 fi
+if [ "${GLOWORM}" == "1" ]; then
+	systemctl enable pigpiod
+else
+	systemctl disable pigpiod
+fi
 systemctl enable regenerate_ssh_host_keys
 EOF
 

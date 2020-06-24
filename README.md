@@ -15,7 +15,8 @@ To install the required dependencies for pi-gen you should run:
 ```bash
 apt-get install coreutils quilt parted qemu-user-static debootstrap zerofree zip \
 dosfstools bsdtar libcap2-bin grep rsync xz-utils file git curl \
-xxd build-essential cmake python3 python3-distutils ant sudo openjdk-11-jdk
+xxd build-essential cmake python3 python3-distutils ant sudo openjdk-11-jdk \
+device-tree-compiler
 ```
 
 Or better, use build-docker.sh instead of build.sh, as the Docker image will

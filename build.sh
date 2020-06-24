@@ -181,6 +181,8 @@ export KEYBOARD_LAYOUT="${KEYBOARD_LAYOUT:-English (UK)}"
 
 export TIMEZONE_DEFAULT="${TIMEZONE_DEFAULT:-Europe/London}"
 
+export GLOWORM="${GLOWORM:-0}"
+
 export GIT_HASH=${GIT_HASH:-"$(git rev-parse HEAD)"}
 
 export CLEAN
